@@ -1,0 +1,45 @@
+version: '3.9'
+networks:
+  internal_UJJigBWx:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
+      driver: default
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST: 172.16.238.2
+    ports:
+      - '5437:5437'
+    volumes:
+      - addressbook-db:/var/lib/postgresql/data
+    networks:
+      internal_UJJigBWx:
+        ipv4_address: 172.16.238.2
+
+  back:
+    image: node:20.6.0
+    container_name: back
+    volumes:
+      - ./:/usr/current/app
+      - ./node_modules:/usr/current/app/node_modules:cached
+    working_dir: '/usr/current/app'
+    env_file: [./.env]
+    ports: ['3001:3001']
+    command: npm run start:dev
+    depends_on:
+      - postgres
+    networks:
+      internal_UJJigBWx:
+        ipv4_address: 172.16.238.3
+
+volumes:
+  addressbook-db:
+    driver: local
